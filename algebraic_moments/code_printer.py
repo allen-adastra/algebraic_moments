@@ -39,8 +39,4 @@ class CodePrinter(object):
         # Generate constraint expressions
         print("\n% Moment constraints.")
         for i, cons in enumerate(moment_constraints):
-            # There is a bug in SymPy which expresses exponentiation in  the form
-            # of a**b, which is compatible with Octave not MATLAB. An issue was
-            # opened to replace it with a^b, which is compatible with both languges.
-            # For now, the temporary fix is to perform a string replace.
-            print(octave_code(cons, assign_to="g"+str(i)).replace("**", "^"))
+            print(octave_code(cons, assign_to="g"+str(i)))

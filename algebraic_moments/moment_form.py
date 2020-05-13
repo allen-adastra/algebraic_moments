@@ -55,6 +55,5 @@ def moment_form(expression, random_vector, moments):
                 raise Exception("Found two instances of Moment in the set 'moments' that match comp_vpm. This is an issue because the elements in 'moments' should be unique.")
             
             term_moments.append(moment)
-        term_string = str(coeff * np.prod(term_moments))
-        terms.append(sp.Symbol(term_string))
+        terms.append(coeff * np.prod(term_moments))
     return sum(terms)
