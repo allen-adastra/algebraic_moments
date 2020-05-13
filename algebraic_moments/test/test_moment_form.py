@@ -1,9 +1,5 @@
-import os
-dir_path = os.path.dirname(os.path.realpath(__file__))
-import sys
-sys.path.append(dir_path + "/../")
-from objects import RandomVariable, RandomVector, DeterministicVariable
-from moment_form import generate_moment_constraints
+from algebraic_moments.objects import RandomVariable, RandomVector, DeterministicVariable
+from algebraic_moments.moment_form import generate_moment_constraints
 
 def test_foo():
     x = RandomVariable("x")

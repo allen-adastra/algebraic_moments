@@ -1,8 +1,4 @@
-import os
-dir_path = os.path.dirname(os.path.realpath(__file__))
-import sys
-sys.path.append(dir_path + "/../")
-from objects import RandomVariable, RandomVector, Moment
+from algebraic_moments.objects import RandomVariable, RandomVector, Moment
 
 def test_RandomVariable():
     w = RandomVariable("w")
