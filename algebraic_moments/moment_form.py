@@ -3,8 +3,8 @@ import numpy as np
 import networkx as nx
 from enum import Enum
 
-from code_printer import CodePrinter
-from objects import Moment
+from algebraic_moments.code_printer import CodePrinter
+from algebraic_moments.objects import Moment
 
 def generate_moment_constraints(expressions, random_vector, deterministic_variables, language):
     """[summary]
