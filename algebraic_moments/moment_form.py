@@ -6,12 +6,13 @@ from enum import Enum
 from code_printer import CodePrinter
 from objects import Moment
 
-def generate_moment_constraints(expressions, random_vector, language):
-    """
+def generate_moment_constraints(expressions, random_vector, deterministic_variables, language):
+    """[summary]
 
     Args:
         expressions ([type]): [description]
         random_vector ([type]): [description]
+        deterministic_variables ([type]): [description]
         language ([type]): [description]
     """
     moments = [] # List of generated moments.
@@ -20,7 +21,7 @@ def generate_moment_constraints(expressions, random_vector, language):
         results.append(moment_form(exp, random_vector, moments))
 
     code_printer = CodePrinter()
-    code_printer.print_moment_constraints(results, moments, language)
+    code_printer.print_moment_constraints(results, moments, deterministic_variables, language)
 
 def moment_form(expression, random_vector, moments):
     raw_polynomial = sp.poly(expression, random_vector.variables)

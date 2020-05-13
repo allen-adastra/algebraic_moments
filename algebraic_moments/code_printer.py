@@ -1,27 +1,46 @@
 from sympy.printing import octave_code
 from sympy.printing.pycode import pycode
+from sympy.utilities.codegen import codegen
 
 class CodePrinter(object):
-    def print_moment_constraints(self, moment_constraints, moments, language):
+    def print_moment_constraints(self, moment_constraints, moments, deterministic_variables, language):
         # Essentially a switch statement.
         method = getattr(self, language, lambda: "Input language is not supported.")
-        return method(moment_constraints, moments)
+        return method(moment_constraints, moments, deterministic_variables)
 
-    def python(self, moment_constraints, moments):
+    def python(self, moment_constraints, moments, deterministic_variables):
+        # Parse required inputs.
+        print("# Parse required inputs.")
         for moment in moments:
             print(str(moment) + " = input_moments[\"" + str(moment) + "\"]")
 
+        for det_var in deterministic_variables:
+            print(str(det_var) +" = input_deterministic[\"" + str(det_var) + "\"]" )
+
+        # Generate constraint expressions.
+        print("\n# Moment constraints.")
         for i, cons in enumerate(moment_constraints):
             print("g" + str(i) + " = " + pycode(cons))
 
-    def matlab(self, moment_constraints, moments):
-        """The octave function should produce code that is compatible with matlab.
+    def matlab(self, moment_constraints, moments, deterministic_variables):
+        """The sympy function octave_code is designed to produce MATLAB compatible code.
         """
-        return self.octave(moment_constraints, moments)
+        return self.octave(moment_constraints, moments, deterministic_variables)
 
-    def octave(self, moment_constraints, moments):
+    def octave(self, moment_constraints, moments, deterministic_variables):
+        # Parse required inputs.
+        print("% Parse required inputs.")
         for moment in moments:
             print(str(moment) + " = input_moments." + str(moment) + ";")
+            
+        for det_var in deterministic_variables:
+            print(str(det_var) + " = input_deterministic." + str(det_var) + ";")
 
+        # Generate constraint expressions
+        print("\n% Moment constraints.")
         for i, cons in enumerate(moment_constraints):
-            print(octave_code(cons, assign_to="g"+str(i)))
+            # There is a bug in SymPy which expresses exponentiation in  the form
+            # of a**b, which is compatible with Octave not MATLAB. An issue was
+            # opened to replace it with a^b, which is compatible with both languges.
+            # For now, the temporary fix is to perform a string replace.
+            print(octave_code(cons, assign_to="g"+str(i)).replace("**", "^"))
