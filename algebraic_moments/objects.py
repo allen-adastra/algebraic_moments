@@ -1,5 +1,115 @@
 import sympy as sp
+from sympy.printing import octave_code
+from sympy.printing.pycode import pycode
 import networkx as nx
+from enum import Enum
+
+class ConcentrationInequalityType(Enum):
+    CANTELLI = 0
+    VP = 1
+    GAUSS = 2
+
+class ConcentrationInequality(object):
+    def __init__(self, moment_expressions, inequality_type):
+        self._moment_expressions = moment_expressions
+        self._type = inequality_type
+
+    def print(self, language):
+
+        first_moment = sp.Symbol("first_moment")
+        variance = sp.Symbol("variance")
+
+        if self._type == ConcentrationInequalityType.CANTELLI:
+            bound_expr = variance/(variance + first_moment**2)
+            condition_expr = -first_moment
+
+        elif self._type == ConcentrationInequalityType.VP:
+            bound_expr = (4.0/9.0) * variance/(variance + first_moment**2)
+            condition_expr = -first_moment + (5.0*variance/3.0)**0.5
+
+        elif self._type == ConcentrationInequalityType.GAUSS:
+            bound_expr = (2.0/9.0) * (variance/first_moment**2)
+            condition_expr = -first_moment + (2.0/3.0) * (variance)**0.5
+        else:
+            raise Exception("Invalid type in ConcentrationInequality.")
+        
+        # Print the code. First print the necessary moment expresssions
+        # Then print the concentration inequalities.
+        self._moment_expressions.print(language)
+        if language == "matlab" or language == "octave":
+            ConcentrationInequality.octave_printer(bound_expr, condition_expr)
+        elif language == "python":
+            ConcentrationInequality.python_printer(bound_expr, condition_expr)
+        else:
+            raise Exception("")
+
+    @staticmethod
+    def octave_printer(bound_expr, condition_expr):
+        print("\n% Establish the probability bound.")
+        print("% We need necessary_condition<=0 for this bound to hold.")
+        print("variance = second_moment - first_moment.^2;")
+        print(octave_code(bound_expr, assign_to="probability_bound"))
+        print(octave_code(condition_expr, assign_to="necessary_condition"))
+
+    @staticmethod
+    def python_printer(bound_expr, condition_expr):
+        print("\n# Establish the probability bound.")
+        print("# We need necessary_condition<=0 for this bound to hold.")
+        print("variance = second_moment - first_moment**2.0")
+        print("probability_bound = " + str(bound_expr))
+        print("necessary_condition = " + str(condition_expr))
+
+class MomentExpressions(object):
+    def __init__(self, moment_expressions, moments, deterministic_variable):
+        self._moment_expressions = moment_expressions
+        self._moments = moments
+        self._deterministic_variables = deterministic_variable
+
+    @property
+    def moment_expressions(self):
+        return self._moment_expressions
+
+    def print(self, language):
+        # Essentially a switch statement.
+        method = getattr(self, language, lambda: "Input language is not supported.")
+        return method(self._moment_expressions, self._moments, self._deterministic_variables)
+
+    @staticmethod
+    def python(moment_expressions, moments, deterministic_variables):
+        # Parse required inputs.
+        print("# Parse required inputs.")
+        for moment in moments:
+            print(str(moment) + " = input_moments[\"" + str(moment) + "\"]")
+
+        for det_var in deterministic_variables:
+            print(str(det_var) +" = input_deterministic[\"" + str(det_var) + "\"]" )
+
+        # Generate constraint expressions.
+        print("\n# Moment expressions.")
+        for name, cons in moment_expressions.items():
+            print(str(name) + " = " + pycode(cons))
+
+    @staticmethod
+    def matlab(moment_expressions, moments, deterministic_variables):
+        """The sympy function octave_code is designed to produce MATLAB compatible code.
+        """
+        return MomentExpressions.octave(moment_expressions, moments, deterministic_variables)
+
+    @staticmethod
+    def octave(moment_expressions, moments, deterministic_variables):
+        # Parse required inputs.
+        print("% Parse required inputs.")
+        for moment in moments:
+            print(str(moment) + " = input_moments." + str(moment) + ";")
+            
+        for det_var in deterministic_variables:
+            print(str(det_var) + " = input_deterministic." + str(det_var) + ";")
+
+        # Generate constraint expressions
+        print("\n% Moment expressions.")
+        for name, cons in moment_expressions.items():
+            print(octave_code(cons, assign_to=str(name)))
+
 
 class DeterministicVariable(sp.Symbol):
     def __init__(self, string_rep):
@@ -107,7 +217,7 @@ class Moment(sp.Symbol):
         string = ''
         for var, power in variable_power_map.items():
             assert power > 0
-            string += str(var) + str(power) + "_"
+            string += str(var) + "Pow" + str(power) + "_"
         # Remove the underscore at the end.
         string = string.strip("_")
         return string

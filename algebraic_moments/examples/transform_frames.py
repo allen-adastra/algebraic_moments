@@ -14,22 +14,21 @@ def transform_frames():
     random_vec = RandomVector([gx, gy], pairwise_dependence)
 
     # Deterministic variables defining the new frame.
-    x = DeterministicVariable("x")
-    y = DeterministicVariable("y")
-    c = DeterministicVariable("cos(theta)")
-    s = DeterministicVariable("sin(theta)")
-    deterministic_vars = [x, y, c, s]
+    c = DeterministicVariable("c")
+    s = DeterministicVariable("s")
+    deterministic_vars = [c, s]
 
     # Use the SymPy matrix class to perform the transformation
     # to get the transformed x and y, tx and ty.
     R = Matrix([[c, -s], [s, c]])
-    vec = Matrix([[gx - x], [gy - y]])
+    vec = Matrix([[gx], [gy]])
     transformed = R.transpose() * vec
     tx = transformed[0]
     ty = transformed[1]
 
     # Now we want the following moments of tx and ty.
-    desired_moments = [tx, ty, tx**2, ty**2, tx*ty, tx**4]
-    generate_moment_expressions(desired_moments, random_vec, deterministic_vars, "matlab")
+    desired_moments = {"txPow1" : tx, "tyPow1" : ty, "txPow2" : tx**2, "tyPow2" : ty**2, "tx_ty" : tx*ty, "txPow4" : tx**4}
+    moment_expressions = generate_moment_expressions(desired_moments, random_vec, deterministic_vars)
+    moment_expressions.print("matlab")
 
 transform_frames()

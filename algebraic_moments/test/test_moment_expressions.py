@@ -8,6 +8,7 @@ def test_foo():
     vector = RandomVector([x, y], [])
     expressions = [(c * x*y**2 + y)**2, (y*x**2 + c*y**2)**3]
     deterministic_variables = [c]
-    generate_moment_expressions(expressions, vector, deterministic_variables, "matlab")
+    moment_expressions = generate_moment_expressions(expressions, vector, deterministic_variables)
+    moment_expressions.print("matlab")
 
 test_foo()

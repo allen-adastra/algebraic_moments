@@ -3,10 +3,9 @@ import numpy as np
 import networkx as nx
 from enum import Enum
 
-from algebraic_moments.code_printer import CodePrinter
-from algebraic_moments.objects import Moment
+from algebraic_moments.objects import Moment, MomentExpressions
 
-def generate_moment_expressions(expressions, random_vector, deterministic_variables, language):
+def generate_moment_expressions(expressions, random_vector, deterministic_variables):
     """[summary]
 
     Args:
@@ -16,12 +15,11 @@ def generate_moment_expressions(expressions, random_vector, deterministic_variab
         language ([type]): [description]
     """
     moments = [] # List of generated moments.
-    results = []
-    for exp in expressions:
-        results.append(moment_form(exp, random_vector, moments))
-
-    code_printer = CodePrinter()
-    code_printer.print_moment_constraints(results, moments, deterministic_variables, language)
+    moment_expressions = dict()
+    for name, exp in expressions.items():
+        moment_expressions[name] = moment_form(exp, random_vector, moments)
+    moment_expressions = MomentExpressions(moment_expressions, moments, deterministic_variables)
+    return moment_expressions
 
 def moment_form(expression, random_vector, moments):
     raw_polynomial = sp.poly(expression, random_vector.variables)
