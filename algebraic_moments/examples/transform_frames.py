@@ -1,5 +1,5 @@
 from algebraic_moments.objects import Moment, RandomVariable, RandomVector, DeterministicVariable
-from algebraic_moments.moment_form import generate_moment_constraints
+from algebraic_moments.moment_expressions import generate_moment_expressions
 from sympy.matrices import Matrix
 
 def transform_frames():
@@ -7,18 +7,18 @@ def transform_frames():
         centered at [x, y]^T and rotated by theta degrees.
     """
 
+    # The random vector.
+    gx = RandomVariable("gx")
+    gy = RandomVariable("gy")
+    pairwise_dependence = [(gx, gy)] # Assume gx and gy are pairwise dependent
+    random_vec = RandomVector([gx, gy], pairwise_dependence)
+
     # Deterministic variables defining the new frame.
     x = DeterministicVariable("x")
     y = DeterministicVariable("y")
     c = DeterministicVariable("cos(theta)")
     s = DeterministicVariable("sin(theta)")
     deterministic_vars = [x, y, c, s]
-
-    # The random vector.
-    gx = RandomVariable("gx")
-    gy = RandomVariable("gy")
-    pairwise_dependence = [(gx, gy)] # Assume gx and gy are pairwise dependent
-    random_vec = RandomVector([gx, gy], pairwise_dependence)
 
     # Use the SymPy matrix class to perform the transformation
     # to get the transformed x and y, tx and ty.
@@ -29,7 +29,7 @@ def transform_frames():
     ty = transformed[1]
 
     # Now we want the following moments of tx and ty.
-    desired_moments = [tx, ty, tx**2, ty**2, tx*ty]
-    generate_moment_constraints(desired_moments, random_vec, deterministic_vars, "matlab")
+    desired_moments = [tx, ty, tx**2, ty**2, tx*ty, tx**4]
+    generate_moment_expressions(desired_moments, random_vec, deterministic_vars, "matlab")
 
 transform_frames()

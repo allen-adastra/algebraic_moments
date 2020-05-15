@@ -6,7 +6,7 @@ from enum import Enum
 from algebraic_moments.code_printer import CodePrinter
 from algebraic_moments.objects import Moment
 
-def generate_moment_constraints(expressions, random_vector, deterministic_variables, language):
+def generate_moment_expressions(expressions, random_vector, deterministic_variables, language):
     """[summary]
 
     Args:
@@ -35,7 +35,6 @@ def moment_form(expression, random_vector, moments):
         term_vpm = random_vector.vpm(multi_index)
 
         components = random_vector.dependence_graph.subgraph_components(list(term_vpm.keys()))
-
         # The idea is to express this term as ceoff * np.prod([term_moments])
         term_moments = []
         for comp in components:
