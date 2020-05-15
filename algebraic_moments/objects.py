@@ -55,7 +55,7 @@ class ConcentrationInequality(object):
     def python_printer(bound_expr, condition_expr):
         print("\n# Establish the probability bound.")
         print("# We need necessary_condition<=0 for this bound to hold.")
-        print("variance = second_moment - first_moment**2.0")
+        print("variance = second_moment - first_moment**2")
         print("probability_bound = " + str(bound_expr))
         print("necessary_condition = " + str(condition_expr))
 
