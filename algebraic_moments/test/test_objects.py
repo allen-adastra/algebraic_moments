@@ -21,8 +21,8 @@ def test_Moment():
     m1 = Moment.from_vpm({w: 1, x: 3})
     m2 = Moment.from_vpm({x: 3, w : 1})
     assert m1.same_vpm(m2)
-    assert str(m1) == "w1_x3"
-    assert str(m2) == "x3_w1" # TODO: enforce an ordering of variable names
+    assert str(m1) == "wPow1_xPow3"
+    assert str(m2) == "xPow3_wPow1" # TODO: enforce an ordering of variable names
 
     # m1 should not equal another moment with a different vpm.
     m3 = Moment.from_vpm({w : 2, x : 3})

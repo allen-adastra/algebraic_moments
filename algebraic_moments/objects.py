@@ -36,9 +36,9 @@ class ConcentrationInequality(object):
         # Print the code. First print the necessary moment expresssions
         # Then print the concentration inequalities.
         self._moment_expressions.print(language)
-        if language == "matlab" or language == "octave":
+        if language.lower() == "matlab" or language.lower() == "octave":
             ConcentrationInequality.octave_printer(bound_expr, condition_expr)
-        elif language == "python":
+        elif language.lower() == "python":
             ConcentrationInequality.python_printer(bound_expr, condition_expr)
         else:
             raise Exception("")

@@ -16,11 +16,11 @@ def generate_concentration_inequality(constraint_rv_expression, random_vec,
     """
     expressions = {"first_moment" : constraint_rv_expression, "second_moment" : constraint_rv_expression**2}
     moment_expressions = generate_moment_expressions(expressions, random_vec, deterministic_vars)
-    if inequality_type == "cantelli":
+    if inequality_type.lower() == "cantelli":
         return ConcentrationInequality(moment_expressions, ConcentrationInequalityType.CANTELLI)
-    elif inequality_type == "vp":
+    elif inequality_type.lower() == "vp":
         return ConcentrationInequality(moment_expressions, ConcentrationInequalityType.VP)
-    elif inequality_type == "gauss":
+    elif inequality_type.lower() == "gauss":
         return ConcentrationInequality(moment_expressions, ConcentrationInequalityType.GAUSS)
     else:
         raise Exception("Invalid inequality type input.")
