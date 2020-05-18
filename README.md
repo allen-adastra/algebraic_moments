@@ -11,6 +11,9 @@ At the repo root, enter:
 
 You should then be able to `import algebraic_moments`.
 
+## Github and Markdown Math
+Unfortunately, Github currently does not [currently render mathematical expressions in Markdown](https://github.community/t5/GitHub-API-Development-and/FEATURE-REQUEST-LaTeX-Math-in-Markdown/td-p/28595), so the user is advised to render this README.md themselves (for example, using VSCode + the mdmath extension).
+
 # Moment Expressions
 Letting $\mathbf{w}$ denote a random vector, $\mathbf{y}$ denote deterministic variables, and $g$ denote a polynomial function. The moment expressions capability allows the user to express:
 
