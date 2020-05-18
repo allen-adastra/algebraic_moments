@@ -113,12 +113,14 @@ class MomentExpressions(object):
 
 class DeterministicVariable(sp.Symbol):
     def __init__(self, string_rep):
+        assert " " not in string_rep, "Spaces not allowed in the string representation of DeterministicVariable"
         sp.Symbol.__init__(string_rep)
 
 """
 """
 class RandomVariable(sp.Symbol):
     def __init__(self, string_rep):
+        assert " " not in string_rep, "Spaces not allowed in the string representation of RandomVariable"
         sp.Symbol.__init__(string_rep)
 
 class DependenceGraph(object):
