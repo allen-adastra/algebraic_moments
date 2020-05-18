@@ -17,22 +17,39 @@ def generate_moment_expressions(expressions, random_vector, deterministic_variab
     moments = [] # List of generated moments.
     moment_expressions = dict()
     for name, exp in expressions.items():
-        moment_expressions[name] = moment_form(exp, random_vector, moments)
+        moment_expressions[name] = moment_expression(exp, random_vector, moments)
     moment_expressions = MomentExpressions(moment_expressions, moments, deterministic_variables)
     return moment_expressions
 
-def moment_form(expression, random_vector, moments):
+def moment_expression(expression, random_vector, moments):
+    """ Generate a moment expression and add new moments to "moments".
+
+    Args:
+        expression ([type]): [description]
+        random_vector ([type]): [description]
+        moments ([type]): [description]
+
+    Raises:
+        Exception: [description]
+
+    Returns:
+        [type]: [description]
+    """
+    # Express "expression" as a polynomial in the random vector.
     raw_polynomial = sp.poly(expression, random_vector.variables)
 
+    # List of terms.
     terms = []
 
     for multi_index, coeff in raw_polynomial.terms():
-        # Go through each term of the raw_polynomial
+        # Go through each term of the raw_polynomial to group coefficients and factor
+        # moments.
 
         # Get the variable power map of this term
         term_vpm = random_vector.vpm(multi_index)
 
         components = random_vector.dependence_graph.subgraph_components(list(term_vpm.keys()))
+
         # The idea is to express this term as ceoff * np.prod([term_moments])
         term_moments = []
         for comp in components:
