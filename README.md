@@ -4,6 +4,12 @@ AlgebraicMoments is a package for automatically generating code to propagate sta
 ## Background
 Statisticial moments are a useful way of characterizing distributions of random variables. Motivated by the problem of chance-constrained motion planning for potentially non-Gaussian systems with nonlinear constraints and dynamics, recent works leverage statistical moments to establish upper bounds on chance-constraints. Doing so, however, often requires the user to either propagate statistical moments through dynamics or compute moments of polynomials applied to random vectors. It turns out that, when working with polynomial dynamics and constraints, it is possible to algorithmically derive closed form expressions for the necessary moments. 
 
+## Quick Start
+At the repo root, enter:
+
+`pip3 install -e .`
+
+You should then be able to `import algebraic_moments`.
 
 # Moment Expressions
 Letting $\mathbf{w}$ denote a random vector, $\mathbf{y}$ denote deterministic variables, and $g$ denote a polynomial function. The moment expressions capability allows the user to express:
