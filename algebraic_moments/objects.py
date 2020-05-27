@@ -15,7 +15,6 @@ class ConcentrationInequality(object):
         self._type = inequality_type
 
     def print(self, language):
-
         first_moment = sp.Symbol("first_moment")
         variance = sp.Symbol("variance")
 
@@ -301,6 +300,14 @@ class RandomVector(object):
     def vpm(self, multi_index):
         return {self._random_variables[i] : power for i, power in enumerate(multi_index) if power>0}
 
+""" Symbolic class for a moment of a random vector.
+
+Raises:
+    Exception: [description]
+
+Returns:
+    [type]: [description]
+"""
 class Moment(sp.Symbol):
     def __new__(cls, vpm):
         string_rep = Moment.generate_string_rep(vpm)
@@ -347,14 +354,22 @@ class Moment(sp.Symbol):
     @staticmethod
     def generate_string_rep(variable_power_map):
         """ Construct the string rep of this moment using the variable_power_map.
-
+            The convention is:
+                - underscore _ denotes multiplication
+                - Order of moments is specified by "variable_name + Pow + int"
+                - variable names are sorted according to a lexographical order.
         Args:
             variable_power_map ([type]):
         """
-        string = ''
-        for var, power in variable_power_map.items():
+        # Sort the variable names according to lexographical order.
+        # The python sorted() function automatically does this.
+        variable_names = sorted(variable_power_map.keys(), key=str)
+
+        # Build the string_rep.
+        string_rep = ''
+        for var in variable_names:
+            power = variable_power_map[var]
             assert power > 0
-            string += str(var) + "Pow" + str(power) + "_"
-        # Remove the underscore at the end.
-        string = string.strip("_")
-        return string
+            string_rep += str(var) + "Pow" + str(power) + "_"
+        string_rep = string_rep.strip("_") # Remove the underscore at the end.
+        return string_rep
