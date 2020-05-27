@@ -110,6 +110,56 @@ class MomentExpressions(object):
         for name, cons in moment_expressions.items():
             print(octave_code(cons, assign_to=str(name)))
 
+class MomentStateDynamicalSystem(object):
+    def __init__(self, moment_state_dynamics, disturbance_moments, control_variables):
+        """
+
+        Args:
+            moment_state_dynamics (dict Moment -> SymPy expression):
+        """
+        self._moment_state = list(moment_state_dynamics.keys())
+        self._moment_state_dynamics = moment_state_dynamics
+        self._disturbance_moments = disturbance_moments
+        self._control_variables = control_variables
+    
+    def print(self, language):
+        if language == "python":
+            self.python_printer()
+        elif language =="matlab" or language=="octave":
+            self.octave_printer()
+        else:
+            raise Exception("Invalid input language.")
+
+    def python_printer(self):
+        print("# Parse required inputs.")
+        for m, dynamics in self._moment_state_dynamics.items():
+            print(str(m) + " = prev_moment_state[\"" + str(m) + "\"]")
+        print("\n")
+        for dist_moment in self._disturbance_moments        :
+            print(str(dist_moment) + " = disturbance_moments[\"" + str(dist_moment) + "\"]")
+        if self._control_variables:
+            print("\n")
+            for control_var in self._control_variables:
+                print(str(control_var) + " = control_inputs[\"" + str(control_var) + "\"]")
+        print("\n#Dynamics updates.")
+        print("moment_state = dict()")
+        for m, dynamics in self._moment_state_dynamics.items():
+            print("moment_state[\"" + str(m) + "\"] = " + str(dynamics))
+    
+    def octave_printer(self):
+        print("% Parse required inputs.")
+        for m, dynamics in self._moment_state_dynamics.items():
+            print(str(m) + " = prev_moment_state." + str(m) + ";")
+        print("\n")
+        for dist_moment in self._disturbance_moments        :
+            print(str(dist_moment) + " = disturbance_moments." + str(dist_moment) + ";")
+        if self._control_variables:
+            print("\n")
+            for control_var in self._control_variables:
+                print(str(control_var) + " = control_inputs." + str(control_var) + ";")
+        print("\n%Dynamics updates.")
+        for m, dynamics in self._moment_state_dynamics.items():
+            print("moment_state." + str(m) + " = " + str(dynamics) + ";")
 
 class DeterministicVariable(sp.Symbol):
     def __init__(self, string_rep):
@@ -174,8 +224,8 @@ class PolyDynamicalSystem(object):
         return self._system_random_vector
 
     @property
-    def state_variables(self):
-        return self._state_variables
+    def control_variables(self):
+        return self._control_variables
 
 class DependenceGraph(object):
     def __init__(self, nx_graph):
@@ -248,10 +298,12 @@ class RandomVector(object):
         return {self._random_variables[i] : power for i, power in enumerate(multi_index) if power>0}
 
 class Moment(sp.Symbol):
-    def __new__(cls, string_rep, vpm):
+    def __new__(cls, vpm):
+        string_rep = Moment.generate_string_rep(vpm)
         return super(Moment, cls).__new__(cls, string_rep)
 
-    def __init__(self, string_rep, vpm):
+    def __init__(self, vpm):
+        string_rep = Moment.generate_string_rep(vpm)
         sp.Symbol.__init__(string_rep)
         self._vpm = {var : power for var, power in vpm.items() if power>0}
 
@@ -287,11 +339,6 @@ class Moment(sp.Symbol):
     @property
     def vpm(self):
         return self._vpm
-
-    @classmethod
-    def from_vpm(cls, variable_power_map):
-        string_rep = Moment.generate_string_rep(variable_power_map)
-        return cls(string_rep, variable_power_map)
 
     @staticmethod
     def generate_string_rep(variable_power_map):

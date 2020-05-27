@@ -66,7 +66,7 @@ def moment_expression(expression, random_vector, moments):
             equivalent_moments = [m for m in all_moments if m.same_vpm(comp_vpm)]
 
             if len(equivalent_moments)==0:
-                moment = Moment.from_vpm(comp_vpm)
+                moment = Moment(comp_vpm)
                 new_moments.append(moment)
             elif len(equivalent_moments)==1:
                 moment = equivalent_moments[0]
