@@ -13,7 +13,11 @@ def fourth_order_collision_rv_moments():
     random_vec = RandomVector([x, y], pairwise_dependence)
 
     # Express the collision random variable.
-    Q = Matrix([[1, 0],[0, 1]])
+    q11 = DeterministicVariable("q11")
+    q12 = DeterministicVariable("q12")
+    q22 = DeterministicVariable("q22")
+    Q = Matrix([[q11, q12],[q12, q22]])
+    deterministic_variables = [q11, q12, q22]
     vec = Matrix([[x], [y]])
     Qrv = vec.transpose() * Q * vec
     Collisionrv = Qrv[0, 0] - 1
@@ -21,7 +25,6 @@ def fourth_order_collision_rv_moments():
     # Express moments of the collision random variable.
     expressions = {"CollisionrvPow1" : Collisionrv, "CollisionrvPow2" : Collisionrv**2,\
                    "CollisionrvPow3" : Collisionrv**3, "CollisionrvPow4" : Collisionrv**4}
-    deterministic_variables = []
     moment_expressions = generate_moment_expressions(expressions, random_vec, deterministic_variables)
 
     moment_expressions.print("python")
