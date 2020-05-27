@@ -177,13 +177,13 @@ class StateVariable(RandomVariable):
     pass
 
 class PolyDynamicalSystem(object):
-    def __init__(self, state_dynamics, control_variables, disturbance_variables, state_dependencies):
+    def __init__(self, state_dynamics, control_variables, disturbance_vector, state_dependencies):
         """ A discrete time polynomial stochastic system.
 
         Args:
             state_dynamics (dict StateVariable -> SymPy Expression): dynamics of the state variables.
             control_variables (list of DeterministicVariable): control variables of the system.
-            disturbance_variables (RandomVector): random vector of disturbances of the system.
+            disturbance_vector (RandomVector): random vector of disturbances of the system.
             state_dependencies (list of tuples of StateVariable): pairwise dependence between instances of StateVariable.
 
         Raises:
@@ -199,9 +199,9 @@ class PolyDynamicalSystem(object):
         self._state_random_vector = RandomVector(self._state_variables, state_dependencies)
 
         # Create an instance of RandomVector that encapsulates the state and disturbance variables.
-        self._disturbance_variables = disturbance_variables
-        self._system_random_vector = RandomVector(self._state_variables + disturbance_variables.variables,
-                                                  self._state_dependence_graph.edges + disturbance_variables.dependence_graph.edges)
+        self._disturbance_vector = disturbance_vector
+        self._system_random_vector = RandomVector(self._state_variables + disturbance_vector.variables,
+                                                  self._state_dependence_graph.edges + disturbance_vector.dependence_graph.edges)
     
     @property
     def dynamics(self):
@@ -226,6 +226,10 @@ class PolyDynamicalSystem(object):
     @property
     def control_variables(self):
         return self._control_variables
+    
+    @property
+    def disturbance_variables(self):
+        return self._disturbance_vector.variables
 
 class DependenceGraph(object):
     def __init__(self, nx_graph):

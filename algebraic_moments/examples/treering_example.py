@@ -40,9 +40,9 @@ def treering_example():
     Exy = ao.Moment({x:1, y:1})
     initial_moment_state = [Ex, Ey, Ex2, Ey2, Exy]
 
-    # Run tree_ring.
-    msds = tree_ring(initial_moment_state, pds)
+    # Run tree_ring to arrive at a MomentStateDynamicalSystem.
+    msds = tree_ring(initial_moment_state, pds, reduced=False)
 
-    msds.print("matlab")
+    msds.print("python")
     
 treering_example()

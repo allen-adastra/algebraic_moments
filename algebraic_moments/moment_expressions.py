@@ -22,14 +22,14 @@ def generate_moment_expressions(expressions, random_vector, deterministic_variab
     moment_expressions = MomentExpressions(moment_expressions, moments, deterministic_variables)
     return moment_expressions
 
-def moment_expression(expression, random_vector, moments):
+def moment_expression(expression, random_vector, moments, partial_reduction=None):
     """ Generate a moment expression and add new moments to "moments".
 
     Args:
         expression ([type]): [description]
         random_vector ([type]): [description]
         moments ([type]): [description]
-
+        partial_reduction (set or None): set of variables that we want to reduce. If None, then reduce everything.
     Raises:
         Exception: [description]
 
@@ -44,7 +44,6 @@ def moment_expression(expression, random_vector, moments):
 
     # New moments that are generated.
     new_moments = []
-
     for multi_index, coeff in raw_polynomial.terms():
         # Go through each term of the raw_polynomial to group coefficients and factor
         # moments.
@@ -52,8 +51,21 @@ def moment_expression(expression, random_vector, moments):
         # Get the variable power map of this term
         term_vpm = random_vector.vpm(multi_index)
 
+        # Factor everything based off independence.
         components = random_vector.dependence_graph.subgraph_components(list(term_vpm.keys()))
 
+        if partial_reduction:
+            # The components that are a subset of the partial reduction.
+            factored_components = [comp for comp in components if set(comp).issubset(partial_reduction)]
+
+            # The components that are not a subset of the partial reduction are grouped together.
+            leftover_component = [comp for comp in components if comp not in factored_components]
+            lumped_component = [{var for comp in leftover_component for var in comp}]
+            components = factored_components + lumped_component
+            components = [comp for comp in components if len(comp)>0]
+
+        # print("factored_components: " + str(factored_components))
+        # print("lumped_component: " + str(lumped_component))
         # The idea is to express this term as ceoff * np.prod([term_moments])
         term_moments = []
         for comp in components:
