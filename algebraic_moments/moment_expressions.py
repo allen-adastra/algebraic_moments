@@ -17,7 +17,8 @@ def generate_moment_expressions(expressions, random_vector, deterministic_variab
     moments = [] # List of generated moments.
     moment_expressions = dict()
     for name, exp in expressions.items():
-        moment_expressions[name] = moment_expression(exp, random_vector, moments)
+        moment_expressions[name], new_moments = moment_expression(exp, random_vector, moments)
+        moments += new_moments
     moment_expressions = MomentExpressions(moment_expressions, moments, deterministic_variables)
     return moment_expressions
 
@@ -41,6 +42,9 @@ def moment_expression(expression, random_vector, moments):
     # List of terms.
     terms = []
 
+    # New moments that are generated.
+    new_moments = []
+
     for multi_index, coeff in raw_polynomial.terms():
         # Go through each term of the raw_polynomial to group coefficients and factor
         # moments.
@@ -58,16 +62,18 @@ def moment_expression(expression, random_vector, moments):
             
             # Find a moment for this component in moments. If one doesn't exist,
             # create a new one.
-            equivalent_moments = [m for m in moments if m.same_vpm(comp_vpm)]
+            all_moments = moments + new_moments
+            equivalent_moments = [m for m in all_moments if m.same_vpm(comp_vpm)]
 
             if len(equivalent_moments)==0:
                 moment = Moment.from_vpm(comp_vpm)
-                moments.append(moment)
+                new_moments.append(moment)
             elif len(equivalent_moments)==1:
                 moment = equivalent_moments[0]
             else:
-                raise Exception("Found two instances of Moment in the set 'moments' that match comp_vpm. This is an issue because the elements in 'moments' should be unique.")
+                raise Exception("Found two instances of Moment in the set 'moments' that match comp_vpm.\
+                                 This is an issue because the elements in 'moments' should be unique.")
             
             term_moments.append(moment)
         terms.append(coeff * np.prod(term_moments))
-    return sum(terms)
+    return sum(terms), new_moments

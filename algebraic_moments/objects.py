@@ -60,10 +60,10 @@ class ConcentrationInequality(object):
         print("necessary_condition = " + str(condition_expr))
 
 class MomentExpressions(object):
-    def __init__(self, moment_expressions, moments, deterministic_variable):
+    def __init__(self, moment_expressions, moments, deterministic_variables):
         self._moment_expressions = moment_expressions
         self._moments = moments
-        self._deterministic_variables = deterministic_variable
+        self._deterministic_variables = deterministic_variables
 
     @property
     def moment_expressions(self):
@@ -123,6 +123,60 @@ class RandomVariable(sp.Symbol):
         assert " " not in string_rep, "Spaces not allowed in the string representation of RandomVariable"
         sp.Symbol.__init__(string_rep)
 
+class StateVariable(RandomVariable):
+    pass
+
+class PolyDynamicalSystem(object):
+    def __init__(self, state_dynamics, control_variables, disturbance_variables, state_dependencies):
+        """ A discrete time polynomial stochastic system.
+
+        Args:
+            state_dynamics (dict StateVariable -> SymPy Expression): dynamics of the state variables.
+            control_variables (list of DeterministicVariable): control variables of the system.
+            disturbance_variables (RandomVector): random vector of disturbances of the system.
+            state_dependencies (list of tuples of StateVariable): pairwise dependence between instances of StateVariable.
+
+        Raises:
+            Exception: [description]
+
+        Returns:
+            [type]: [description]
+        """
+        self._state_variables = list(state_dynamics.keys())
+        self._control_variables = control_variables
+        self._dynamics = state_dynamics
+        self._state_dependence_graph = DependenceGraph.from_lists(self._state_variables, state_dependencies)
+        self._state_random_vector = RandomVector(self._state_variables, state_dependencies)
+
+        # Create an instance of RandomVector that encapsulates the state and disturbance variables.
+        self._disturbance_variables = disturbance_variables
+        self._system_random_vector = RandomVector(self._state_variables + disturbance_variables.variables,
+                                                  self._state_dependence_graph.edges + disturbance_variables.dependence_graph.edges)
+    
+    @property
+    def dynamics(self):
+        """ 
+        Returns:
+            dict StateVariable -> SymPy expression: dictionary of dynamics.
+        """
+        return self._dynamics
+
+    @property
+    def state_variables(self):
+        return self._state_variables
+    
+    @property
+    def state_random_vector(self):
+        return self._state_random_vector
+
+    @property
+    def system_random_vector(self):
+        return self._system_random_vector
+
+    @property
+    def state_variables(self):
+        return self._state_variables
+
 class DependenceGraph(object):
     def __init__(self, nx_graph):
         self._nx_graph = nx_graph
@@ -140,6 +194,36 @@ class DependenceGraph(object):
         connected_components = list(nx.connected_components(subgraph))
         return connected_components
 
+    @property
+    def edges(self):
+        return list(self._nx_graph.edges)
+
+    @property
+    def nx_graph(self):
+        return self._nx_graph
+    
+    @classmethod
+    def from_lists(cls, variables, variable_dependencies):
+        """
+
+        Args:
+            variables ([type]): [description]
+            dependencies ([type]): [description]
+
+        Raises:
+            Exception: [description]
+
+        Returns:
+            [type]: [description]
+        """
+
+        # Construct the dependence_graph.
+        dep_graph = nx.Graph()
+        dep_graph.add_nodes_from(variables)
+        if variable_dependencies:
+            dep_graph.add_edges_from(variable_dependencies)
+        return cls(dep_graph)
+
 class RandomVector(object):
     def __init__(self, random_variables, variable_dependencies):
         """
@@ -150,11 +234,7 @@ class RandomVector(object):
         """
         self._random_variables = random_variables
 
-        # Construct the dependence_graph.
-        dep_graph = nx.Graph()
-        dep_graph.add_nodes_from(self._random_variables)
-        dep_graph.add_edges_from(variable_dependencies)
-        self._dependence_graph = DependenceGraph(dep_graph)
+        self._dependence_graph = DependenceGraph.from_lists(random_variables, variable_dependencies)
     
     @property
     def variables(self):
@@ -199,7 +279,11 @@ class Moment(sp.Symbol):
                 return False
         else:
             raise Exception("Invalid input to Moment.same_vpm.")
-
+    
+    @property
+    def variables(self):
+        return list(self._vpm.keys())
+        
     @property
     def vpm(self):
         return self._vpm
