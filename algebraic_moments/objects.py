@@ -14,7 +14,7 @@ class ConcentrationInequality(object):
         self._moment_expressions = moment_expressions
         self._type = inequality_type
 
-    def print(self, language):
+    def build_expressions(self):
         first_moment = sp.Symbol("first_moment")
         variance = sp.Symbol("variance")
 
@@ -31,32 +31,30 @@ class ConcentrationInequality(object):
             condition_expr = -first_moment + (2.0/3.0) * (variance)**0.5
         else:
             raise Exception("Invalid type in ConcentrationInequality.")
-        
-        # Print the code. First print the necessary moment expresssions
-        # Then print the concentration inequalities.
-        self._moment_expressions.print(language)
-        if language.lower() == "matlab" or language.lower() == "octave":
-            ConcentrationInequality.octave_printer(bound_expr, condition_expr)
-        elif language.lower() == "python":
-            ConcentrationInequality.python_printer(bound_expr, condition_expr)
-        else:
-            raise Exception("")
+            
+        return bound_expr, condition_expr
 
-    @staticmethod
-    def octave_printer(bound_expr, condition_expr):
+    def print_python(self):
+        bound_expr, condition_expr = self.build_expressions()
+        self._moment_expressions.print_python()
+        print("\n# Establish the probability bound.")
+        print("# We need necessary_condition<=0 for this bound to hold.")
+        print("variance = second_moment - first_moment**2")
+        print("probability_bound = " + str(bound_expr))
+        print("necessary_condition = " + str(condition_expr))
+    
+    def print_matlab(self):
+        return self.print_octave()
+
+    def print_octave(self):
+        bound_expr, condition_expr = self.build_expressions()
+        self._moment_expressions.print_octave()
         print("\n% Establish the probability bound.")
         print("% We need necessary_condition<=0 for this bound to hold.")
         print("variance = second_moment - first_moment.^2;")
         print(octave_code(bound_expr, assign_to="probability_bound"))
         print(octave_code(condition_expr, assign_to="necessary_condition"))
 
-    @staticmethod
-    def python_printer(bound_expr, condition_expr):
-        print("\n# Establish the probability bound.")
-        print("# We need necessary_condition<=0 for this bound to hold.")
-        print("variance = second_moment - first_moment**2")
-        print("probability_bound = " + str(bound_expr))
-        print("necessary_condition = " + str(condition_expr))
 
 class MomentExpressions(object):
     def __init__(self, moment_expressions, moments, deterministic_variables):
@@ -68,45 +66,37 @@ class MomentExpressions(object):
     def moment_expressions(self):
         return self._moment_expressions
 
-    def print(self, language):
-        # Essentially a switch statement.
-        method = getattr(self, language, lambda: "Input language is not supported.")
-        return method(self._moment_expressions, self._moments, self._deterministic_variables)
-
-    @staticmethod
-    def python(moment_expressions, moments, deterministic_variables):
+    def print_python(self):
         # Parse required inputs.
         print("# Parse required inputs.")
-        for moment in moments:
+        for moment in self._moments:
             print(str(moment) + " = input_moments[\"" + str(moment) + "\"]")
 
-        for det_var in deterministic_variables:
+        for det_var in self._deterministic_variables:
             print(str(det_var) +" = input_deterministic[\"" + str(det_var) + "\"]" )
 
         # Generate constraint expressions.
         print("\n# Moment expressions.")
-        for name, cons in moment_expressions.items():
+        for name, cons in self._moment_expressions.items():
             print(str(name) + " = " + pycode(cons))
 
-    @staticmethod
-    def matlab(moment_expressions, moments, deterministic_variables):
+    def print_matlab(self):
         """The sympy function octave_code is designed to produce MATLAB compatible code.
         """
-        return MomentExpressions.octave(moment_expressions, moments, deterministic_variables)
+        return self.print_octave()
 
-    @staticmethod
-    def octave(moment_expressions, moments, deterministic_variables):
+    def print_octave(self):
         # Parse required inputs.
         print("% Parse required inputs.")
-        for moment in moments:
+        for moment in self._moments:
             print(str(moment) + " = input_moments." + str(moment) + ";")
             
-        for det_var in deterministic_variables:
+        for det_var in self._deterministic_variables:
             print(str(det_var) + " = input_deterministic." + str(det_var) + ";")
 
         # Generate constraint expressions
         print("\n% Moment expressions.")
-        for name, cons in moment_expressions.items():
+        for name, cons in self._moment_expressions.items():
             print(octave_code(cons, assign_to=str(name)))
 
 class MomentStateDynamicalSystem(object):
@@ -120,16 +110,8 @@ class MomentStateDynamicalSystem(object):
         self._moment_state_dynamics = moment_state_dynamics
         self._disturbance_moments = disturbance_moments
         self._control_variables = control_variables
-    
-    def print(self, language):
-        if language == "python":
-            self.python_printer()
-        elif language =="matlab" or language=="octave":
-            self.octave_printer()
-        else:
-            raise Exception("Invalid input language.")
 
-    def python_printer(self):
+    def print_python(self):
         print("# Parse required inputs.")
         for m, dynamics in self._moment_state_dynamics.items():
             print(str(m) + " = prev_moment_state[\"" + str(m) + "\"]")
@@ -144,8 +126,11 @@ class MomentStateDynamicalSystem(object):
         print("moment_state = dict()")
         for m, dynamics in self._moment_state_dynamics.items():
             print("moment_state[\"" + str(m) + "\"] = " + str(dynamics))
-    
-    def octave_printer(self):
+
+    def print_matlab(self):
+        return self.print_octave()
+
+    def print_octave(self):
         print("% Parse required inputs.")
         for m, dynamics in self._moment_state_dynamics.items():
             print(str(m) + " = prev_moment_state." + str(m) + ";")
@@ -285,8 +270,7 @@ class RandomVector(object):
             random_variables (list of instances of RandomVariable):
             variable_dependencies (list of tuples of RandomVariable): Tuples specify pairwise dependence between random variables
         """
-        self._random_variables = random_variables
-
+        self._random_variables = self.sort_variables(random_variables)
         self._dependence_graph = DependenceGraph.from_lists(random_variables, variable_dependencies)
     
     @property
@@ -300,14 +284,12 @@ class RandomVector(object):
     def vpm(self, multi_index):
         return {self._random_variables[i] : power for i, power in enumerate(multi_index) if power>0}
 
-""" Symbolic class for a moment of a random vector.
+    @staticmethod
+    def sort_variables(variables):
+        """ Sort variables by lexographical order.
+        """
+        return sorted(variables, key=str)
 
-Raises:
-    Exception: [description]
-
-Returns:
-    [type]: [description]
-"""
 class Moment(sp.Symbol):
     def __new__(cls, vpm):
         string_rep = Moment.generate_string_rep(vpm)
@@ -317,6 +299,8 @@ class Moment(sp.Symbol):
         string_rep = Moment.generate_string_rep(vpm)
         sp.Symbol.__init__(string_rep)
         self._vpm = {var : power for var, power in vpm.items() if power>0}
+        # Generate the multi_idx according to the variable ordering used in RandomVector.
+        self._multi_idx = tuple([self._vpm[key] for key in RandomVector.sort_variables(vpm.keys())])
 
     def same_vpm(self, input):
         """ Check if an input vpm or instance of Moment is the same.
@@ -350,6 +334,10 @@ class Moment(sp.Symbol):
     @property
     def vpm(self):
         return self._vpm
+    
+    @property
+    def multi_idx(self):
+        return self._multi_idx
 
     @staticmethod
     def generate_string_rep(variable_power_map):
@@ -361,9 +349,8 @@ class Moment(sp.Symbol):
         Args:
             variable_power_map ([type]):
         """
-        # Sort the variable names according to lexographical order.
-        # The python sorted() function automatically does this.
-        variable_names = sorted(variable_power_map.keys(), key=str)
+        # Sort the variable names according to the ordering used by RandomVector.
+        variable_names = RandomVector.sort_variables(variable_power_map.keys())
 
         # Build the string_rep.
         string_rep = ''

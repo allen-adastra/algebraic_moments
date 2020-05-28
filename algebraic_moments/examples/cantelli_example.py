@@ -37,6 +37,6 @@ def cantelli():
 
     # Generate the code for the concentration inequality.
     concentration_inequality = generate_concentration_inequality(collision_rv, random_vec, deterministic_vars, "cantelli")
-    concentration_inequality.print("python")
+    concentration_inequality.print_python()
 
 cantelli()

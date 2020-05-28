@@ -21,8 +21,9 @@ def test_Moment():
     m1 = Moment({w: 1, x: 3})
     m2 = Moment({x: 3, w : 1})
     assert m1.same_vpm(m2)
+    # Test that the correct ordering is in place.
     assert str(m1) == "wPow1_xPow3"
-    assert str(m2) == "xPow3_wPow1" # TODO: enforce an ordering of variable names
+    assert str(m2) == "wPow1_xPow3"
 
     # m1 should not equal another moment with a different vpm.
     m3 = Moment({w : 2, x : 3})

@@ -43,6 +43,6 @@ def treering_example():
     # Run tree_ring to arrive at a MomentStateDynamicalSystem.
     msds = tree_ring(initial_moment_state, pds, reduced=False)
 
-    msds.print("python")
+    msds.print_python()
     
 treering_example()
