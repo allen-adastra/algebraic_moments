@@ -27,6 +27,7 @@ def fourth_order_collision_rv_moments():
                    "CollisionrvPow3" : Collisionrv**3, "CollisionrvPow4" : Collisionrv**4}
     moment_expressions = generate_moment_expressions(expressions, random_vec, deterministic_variables)
 
-    moment_expressions.print_python()
+    moment_expressions.print_python(multi_idx_keys = False)
+    moment_expressions.print_python(multi_idx_keys = True)
 
 fourth_order_collision_rv_moments()

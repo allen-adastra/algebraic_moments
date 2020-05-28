@@ -57,20 +57,32 @@ class ConcentrationInequality(object):
 
 
 class MomentExpressions(object):
-    def __init__(self, moment_expressions, moments, deterministic_variables):
+    def __init__(self, moment_expressions, moments, random_vector, deterministic_variables):
         self._moment_expressions = moment_expressions
         self._moments = moments
+        self._random_vector = random_vector
         self._deterministic_variables = deterministic_variables
 
     @property
     def moment_expressions(self):
         return self._moment_expressions
 
-    def print_python(self):
+    def print_python(self, multi_idx_keys = False):
+        """Print python code.
+
+        Args:
+            multi_idx_keys (bool, optional): If true, input_moments keys are multi-indices. Defaults to False.
+        """
         # Parse required inputs.
         print("# Parse required inputs.")
         for moment in self._moments:
-            print(str(moment) + " = input_moments[\"" + str(moment) + "\"]")
+            if multi_idx_keys:
+                # Get the multi index of the moment relative to self._random_vector.
+                dict_input = str(self._random_vector.multi_idx(moment.vpm))
+            else:
+                dict_input = "\"" + str(moment) + "\""
+
+            print(str(moment) + " = input_moments[" + dict_input + "]")
 
         for det_var in self._deterministic_variables:
             print(str(det_var) +" = input_deterministic[\"" + str(det_var) + "\"]" )
@@ -281,6 +293,9 @@ class RandomVector(object):
     def dependence_graph(self):
         return self._dependence_graph
 
+    def multi_idx(self, vpm):
+        return tuple(vpm[var] if var in vpm.keys() else 0 for var in self._random_variables)
+
     def vpm(self, multi_index):
         return {self._random_variables[i] : power for i, power in enumerate(multi_index) if power>0}
 
@@ -299,8 +314,6 @@ class Moment(sp.Symbol):
         string_rep = Moment.generate_string_rep(vpm)
         sp.Symbol.__init__(string_rep)
         self._vpm = {var : power for var, power in vpm.items() if power>0}
-        # Generate the multi_idx according to the variable ordering used in RandomVector.
-        self._multi_idx = tuple([self._vpm[key] for key in RandomVector.sort_variables(vpm.keys())])
 
     def same_vpm(self, input):
         """ Check if an input vpm or instance of Moment is the same.
@@ -334,10 +347,16 @@ class Moment(sp.Symbol):
     @property
     def vpm(self):
         return self._vpm
-    
-    @property
-    def multi_idx(self):
-        return self._multi_idx
+
+    def multi_idx(self, random_vector):
+        """ Generate the multi index w.r.t. a given random vector.
+
+        Args:
+            random_vector ([type]): [description]
+
+        Returns:
+            [type]: [description]
+        """
 
     @staticmethod
     def generate_string_rep(variable_power_map):

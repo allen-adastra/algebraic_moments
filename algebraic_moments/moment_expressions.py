@@ -19,7 +19,7 @@ def generate_moment_expressions(expressions, random_vector, deterministic_variab
     for name, exp in expressions.items():
         moment_expressions[name], new_moments = moment_expression(exp, random_vector, moments)
         moments += new_moments
-    moment_expressions = MomentExpressions(moment_expressions, moments, deterministic_variables)
+    moment_expressions = MomentExpressions(moment_expressions, moments, random_vector, deterministic_variables)
     return moment_expressions
 
 def moment_expression(expression, random_vector, moments, partial_reduction=None):
