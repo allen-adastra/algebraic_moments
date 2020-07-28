@@ -1,6 +1,7 @@
 import sympy as sp
 from sympy.printing import octave_code
 from sympy.printing.pycode import pycode
+from sympy.printing.ccode import ccode
 import networkx as nx
 from enum import Enum
 
@@ -124,16 +125,45 @@ class MomentStateDynamicalSystem(object):
         self._control_variables = control_variables
 
     def print_cpp(self):
-        print("# Aliases for the required inputs.")
+        # Print imports necessary.
+        print("#include <cmath> \nusing namespace std;\n")
+
+        # Generate code for input structures.
+        moment_state_struct = "struct MomentState {\n"
+        for m, _ in self._moment_state_dynamics.items():
+            moment_state_struct += "double " + str(m) + ";\n"
+        moment_state_struct += "};\n"
+        print(moment_state_struct)
+
+        disturbance_moment_struct = "struct DisturbanceMoments{\n"
+        for dist_moment in self._disturbance_moments:
+            disturbance_moment_struct += "double " + str(dist_moment) + ";\n"
+        disturbance_moment_struct += "};\n"
+        print(disturbance_moment_struct)
+
+        controls_struct = "struct Controls{\n"
+        for control_var in self._control_variables:
+            controls_struct += "double " + str(control_var) + ";\n"
+        controls_struct += "};\n"
+        print(controls_struct)
+
+        # Generate code for the function.
+        print("void PropagateMoments(const MomentState &prev_moment_state, const DisturbanceMoments &disturbance_moments, const Controls &control_inputs, MomentState *moment_state){")
+
+        print("// Aliases for the required inputs.")
         for m, dynamics in self._moment_state_dynamics.items():
-            print("const double &" + str(m) + " = prev_moment_state." + str(m))
+            print("const double &" + str(m) + " = prev_moment_state." + str(m) + ";")
         print("\n")
-        for dist_moment in self._disturbance_moments        :
-            print("const double &" + str(dist_moment) + " = disturbance_moments." + str(dist_moment))
+        for dist_moment in self._disturbance_moments:
+            print("const double &" + str(dist_moment) + " = disturbance_moments." + str(dist_moment) + ";")
         if self._control_variables:
             print("\n")
             for control_var in self._control_variables:
-                print("const double &" + str(control_var) + " = control_inputs." + str(control_var))
+                print("const double &" + str(control_var) + " = control_inputs." + str(control_var) + ";")
+        print("\n// Dynamics updates.")
+        for m, dynamics in self._moment_state_dynamics.items():
+            print("moment_state->" + str(m) + " = " + str(ccode(dynamics)) + ";\n")
+        print("return; \n }")
 
     def print_python(self):
         print("# Parse required inputs.")

@@ -31,11 +31,10 @@ def differential_robot():
     control_variables = [sv, cv, vls, vrs]
 
     # Code to derive the trig expansions
-    theta = ao.StateVariable("theta")
-    v = ao.StateVariable("v")
-    print(sp.expand_trig(sp.cos(theta  + v + omegars - omegals)))
-    print(sp.expand_trig(sp.sin(theta + v + omegars - omegals)))
-    import pdb; pdb.set_trace()
+    # theta = ao.StateVariable("theta")
+    # v = ao.StateVariable("v")
+    # print(sp.expand_trig(sp.cos(theta  + v + omegars - omegals)))
+    # print(sp.expand_trig(sp.sin(theta + v + omegars - omegals)))
     
 
     state_dynamics = {
