@@ -123,6 +123,18 @@ class MomentStateDynamicalSystem(object):
         self._disturbance_moments = disturbance_moments
         self._control_variables = control_variables
 
+    def print_cpp(self):
+        print("# Aliases for the required inputs.")
+        for m, dynamics in self._moment_state_dynamics.items():
+            print("const double &" + str(m) + " = prev_moment_state." + str(m))
+        print("\n")
+        for dist_moment in self._disturbance_moments        :
+            print("const double &" + str(dist_moment) + " = disturbance_moments." + str(dist_moment))
+        if self._control_variables:
+            print("\n")
+            for control_var in self._control_variables:
+                print("const double &" + str(control_var) + " = control_inputs." + str(control_var))
+
     def print_python(self):
         print("# Parse required inputs.")
         for m, dynamics in self._moment_state_dynamics.items():

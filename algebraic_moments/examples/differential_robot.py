@@ -24,27 +24,25 @@ def differential_robot():
     disturbance_vector = ao.RandomVector([sol, col, sor, cor, omegals, omegars], disturbance_dependencies)
 
     # Declare the control variables.
-    svl = ao.DeterministicVariable("svl") # svl = sin((dt/d) * v_l)
-    svr = ao.DeterministicVariable("svr") # svr = sin((dt/d) * v_r)
-    cvl = ao.DeterministicVariable("cvl") # cvl = cos((dt/d) * v_l)
-    cvr = ao.DeterministicVariable("cvr") # cvr = cos((dt/d) * v_r)
+    sv = ao.DeterministicVariable("sv") # sv = sin((dt/d) * (v_r - v_l))
+    cv = ao.DeterministicVariable("cv") # cv = cos((dt/d) * (v_r - v_l))
     vls = ao.DeterministicVariable("vls") # vls = (dt/2)*vl
     vrs = ao.DeterministicVariable("vrs") # vrs = (dt/2)*vr
-    dt_over_two = ao.DeterministicVariable("dt_over_two") # dt/2
-    dt_over_d = ao.DeterministicVariable("dt_over_d") # dt/d
-    control_variables = [svl, svr, cvl, cvr, vls, vrs, dt_over_two, dt_over_d]
+    control_variables = [sv, cv, vls, vrs]
 
     # Code to derive the trig expansions
-    # theta = ao.StateVariable("theta")
-    # print(sp.expand_trig(sp.cos(theta - vls - omegals + vrs + omegars)))
-    # print(sp.expand_trig(sp.sin(theta - vls - omegals + vrs + omegars)))
+    theta = ao.StateVariable("theta")
+    v = ao.StateVariable("v")
+    print(sp.expand_trig(sp.cos(theta  + v + omegars - omegals)))
+    print(sp.expand_trig(sp.sin(theta + v + omegars - omegals)))
+    import pdb; pdb.set_trace()
     
 
     state_dynamics = {
-        x : x + dt_over_two * (vls + vrs + omegals + omegars) * c,
-        y : y + dt_over_two * (vls + vrs + omegals + omegars) * s,
-        c : (((-sor*s + cor*c)*svr + (sor*c + s*cor)*cvr)*sol + ((-sor*s + cor*c)*cvr - (sor*c + s*cor)*svr)*col)*cvl + (((-sor*s + cor*c)*svr + (sor*c + s*cor)*cvr)*col - ((-sor*s + cor*c)*cvr - (sor*c + s*cor)*svr)*sol)*svl,
-        s : -(((-sor*s + cor*c)*svr + (sor*c + s*cor)*cvr)*sol + ((-sor*s + cor*c)*cvr - (sor*c + s*cor)*svr)*col)*svl + (((-sor*s + cor*c)*svr + (sor*c + s*cor)*cvr)*col - ((-sor*s + cor*c)*cvr - (sor*c + s*cor)*svr)*sol)*cvl
+        x : x + (vls + vrs + omegals + omegars) * c,
+        y : y + (vls + vrs + omegals + omegars) * s,
+        c : ((-s*sv + c*cv)*sor + (s*cv + sv*c)*cor)*sol + ((-s*sv + c*cv)*cor - (s*cv + sv*c)*sor)*col,
+        s : ((-s*sv + c*cv)*sor + (s*cv + sv*c)*cor)*col - ((-s*sv + c*cv)*cor - (s*cv + sv*c)*sor)*sol
     }
     
     # Instantiate the PolyDynamicalSystem
@@ -61,6 +59,6 @@ def differential_robot():
     # Run tree_ring to arrive at a MomentStateDynamicalSystem.
     msds = tree_ring(initial_moment_state, pds, reduced=False)
 
-    msds.print_python()
+    msds.print_cpp()
 
 differential_robot()
