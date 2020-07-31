@@ -148,22 +148,42 @@ class MomentStateDynamicalSystem(object):
         print(controls_struct)
 
         # Generate code for the function.
-        print("void PropagateMoments(const MomentState &prev_moment_state, const DisturbanceMoments &disturbance_moments, const Controls &control_inputs, MomentState *moment_state){")
+        print("void PropagateMoments(const MomentState *prev_moment_state, const DisturbanceMoments *disturbance_moments, const Controls *control_inputs, MomentState *moment_state){")
 
         print("// Aliases for the required inputs.")
         for m, dynamics in self._moment_state_dynamics.items():
-            print("const double &" + str(m) + " = prev_moment_state." + str(m) + ";")
+            print("const double &" + str(m) + " = prev_moment_state->" + str(m) + ";")
         print("\n")
         for dist_moment in self._disturbance_moments:
-            print("const double &" + str(dist_moment) + " = disturbance_moments." + str(dist_moment) + ";")
+            print("const double &" + str(dist_moment) + " = disturbance_moments->" + str(dist_moment) + ";")
         if self._control_variables:
             print("\n")
             for control_var in self._control_variables:
-                print("const double &" + str(control_var) + " = control_inputs." + str(control_var) + ";")
+                print("const double &" + str(control_var) + " = control_inputs->" + str(control_var) + ";")
         print("\n// Dynamics updates.")
         for m, dynamics in self._moment_state_dynamics.items():
             print("moment_state->" + str(m) + " = " + str(ccode(dynamics)) + ";\n")
         print("return; \n }")
+    
+    def print_cpp_python_structures(self):
+        # Generate code for Python bindings to input structures vis ctypes.
+        def structure_python_binding_generator(structure_name, variable_names):
+            # Generator that assumes all fields are c_double.
+
+            struct = "class " + str(structure_name) + "(ctypes.Structure):\n"
+            struct += "    _fields_ = ["
+            for var in variable_names:
+                struct += "(\"" + str(var)+ "\", c_double),"
+            # Strip the final comma
+            struct = struct[:-1]
+            struct+="]"
+            return struct
+        moment_state_struct = structure_python_binding_generator("MomentState", [m for m, _ in self._moment_state_dynamics.items()])
+        disturbance_moment_struct = structure_python_binding_generator("DisturbanceMoments", self._disturbance_moments)
+        control_struct = structure_python_binding_generator("Controls", self._control_variables)
+        print(moment_state_struct)
+        print(disturbance_moment_struct)
+        print(control_struct)
 
     def print_python(self):
         print("# Parse required inputs.")
